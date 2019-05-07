@@ -10,7 +10,7 @@ self.addEventListener('activate', (e) => {
     console.debug('Service Worker: Activated');
 });
 
-// 这段代码是从MDN上Copy下来的, 可以工作
+// Call Fetch Event
 self.addEventListener('fetch', function (event) {
     event.respondWith(
         caches.match(event.request).then(function (resp) {

@@ -4,13 +4,17 @@ const CopyPlugin = require('copy-webpack-plugin');
 
 const buildPath = path.resolve(__dirname, 'build');
 const uglifyJsPlugin = new UglifyJsPlugin();
-const copyPlugin = new CopyPlugin([{from: 'public', to: buildPath}]);
+const copyPlugin = new CopyPlugin([{from: './srcStatic/', to: buildPath}]);
 
-module.exports = {
+const config = {
     devtool: 'eval-source-map',
+    entry: {
+        'main': './srcMain/main.js',
+        'sw': './srcSw/sw.js'
+    },
     output: {
-        filename: 'main.js',
-        path: buildPath
+        path: buildPath,
+        globalObject: 'this'
     },
     module: {
         rules: [
@@ -46,3 +50,5 @@ module.exports = {
         copyPlugin,
     ],
 };
+
+module.exports = config;
