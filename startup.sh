@@ -18,7 +18,7 @@ rsync -aPi \
 
 # Update Project name
 sed -i "s/%TITLE%/$TITLE/g" $TITLE/package.json
-sed -i "s/%TITLE%/$TITLE/g" $TITLE/public/index.html
+sed -i "s/%TITLE%/$TITLE/g" $TITLE/srcStatic/index.html
 
 # Install dependencies and initial git repo
 cd $TITLE

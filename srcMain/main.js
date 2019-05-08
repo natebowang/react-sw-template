@@ -1,20 +1,19 @@
-import react from 'react';
-import reactdom from 'react-dom';
+import React from 'react';
+import ReactDOM from 'react-dom';
 
-const main = () => {
+const Main = () => {
     return (
-        <div>hello react!</div>
+        <div>Hello React!</div>
     )
 };
 
-reactdom.render(<main/>, document.getelementbyid('root'));
+ReactDOM.render(<Main/>, document.getElementById('root'));
 
-if ('serviceworker' in navigator) {
-    window.addeventlistener('load', () => {
-        navigator.serviceworker
-            .register('sw.js')
-            .then(reg => console.debug('service worker: registered'))
-            .catch(err => 'service worker: error.');
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker
+            .register('./sw.js')
+            .then(reg => console.debug('Service Worker: Registered'))
+            .catch(err => 'Service Worker: Error.');
     });
 }
-
