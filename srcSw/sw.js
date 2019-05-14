@@ -2,6 +2,7 @@ const cacheName = 'v1';
 
 // Call Install Event
 self.addEventListener('install', (e) => {
+    console.log(serviceWorkerOption);
     console.debug('Service Worker: Installed');
 });
 
@@ -11,15 +12,11 @@ self.addEventListener('activate', (e) => {
 });
 
 // Call Fetch Event
-self.addEventListener('fetch', function (event) {
+self.addEventListener('fetch', (event) => {
     event.respondWith(
-        caches.match(event.request).then(function (resp) {
-            return resp || fetch(event.request).then(function (response) {
-                return caches.open(cacheName).then(function (cache) {
-                    cache.put(event.request, response.clone());
-                    return response;
-                });
-            });
-        })
+        caches.match(event.request).then(resp => resp || fetch(event.request).then(response => caches.open(cacheName).then((cache) => {
+            cache.put(event.request, response.clone());
+            return response;
+        }))),
     );
 });
