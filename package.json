@@ -10,7 +10,7 @@
     "url": "https://github.com"
   },
   "scripts": {
-    "start": "webpack-dev-server --env dev --port 3000",
+    "start": "webpack-dev-server --env dev",
     "build": "rm -rf dist && webpack --env prod",
     "test": "jest"
   },
@@ -30,10 +30,11 @@
     "babel-core": "^7.0.0-bridge.0",
     "babel-jest": "^23.6.0",
     "babel-loader": "^8.0.4",
+    "compression-webpack-plugin": "^2.0.0",
     "file-loader": "^3.0.1",
     "html-webpack-plugin": "^3.2.0",
-    "serviceworker-webpack-plugin": "^1.0.1",
     "jest": "^23.6.0",
+    "serviceworker-webpack-plugin": "^1.0.1",
     "webpack": "^4.28.2",
     "webpack-cli": "^3.1.2",
     "webpack-dev-server": "^3.1.14",
