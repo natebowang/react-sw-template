@@ -6,21 +6,22 @@ const cacheVersion = 'v1';
 self.addEventListener('install', (event) => {
     console.debug('SW installed');
 
+    // 1st option for service worker,
+    // webpackGeneratedAssets will be defined during webpack process
+    console.debug('Generated Assets: ' + webpackGeneratedAssets);
+    // 2nd option for service worker
+    // console.debug(serviceWorkerOption);
+
     // cache all static assets manually,
     // since these files were download before sw get installed
     event.waitUntil(
         caches.open(cacheVersion).then(
             (cache) => {
-                // 1st option for service worker,
-                // webpackGeneratedAssets will be defined during webpack process
-                console.debug('Generated Assets: ' + webpackGeneratedAssets);
-                // 2nd option for service worker
-                // console.debug(serviceWorkerOption);
                 return cache.addAll(webpackGeneratedAssets);
-                // todo: delete old file
             }
         )
     );
+    // try to delete stale asset, but would be too complicated.
 });
 
 // Callback after sw activated, and before your first fetch event,
