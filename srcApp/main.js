@@ -11,12 +11,15 @@ ReactDOM.render(<Main/>, document.getElementById('root'));
 
 // 1st option for service worker
 if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker
-            .register('./sw.js')
-            .then(reg => console.debug('Service Worker: Registered'))
-            .catch(err => 'Service Worker: Error.');
-    });
+    navigator.serviceWorker
+    // the max scope is the location of the worker, so I choose to put it under root
+        .register('./sw.js', {scope: '/'})
+        .then(reg => {
+            console.debug('SW registration succeeded. Scope is ' + reg.scope)
+        })
+        .catch(err => {
+            console.debug('SW registration failed with ' + err)
+        });
 }
 // 2st option for service worker
 // if ('serviceWorker' in navigator) {

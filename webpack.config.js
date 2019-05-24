@@ -72,7 +72,8 @@ const hmrPlugin = new webpack.HotModuleReplacementPlugin()
 // my plugin
 // https://github.com/kossnocorp/on-build-webpack/issues/5#issuecomment-432192978
 const distSwPath = path.resolve(buildPath, 'sw.js');
-const distPwaManifestPath = path.resolve(buildPath, 'pwa-manifest.json');
+const pwaManifestName = 'pwa-manifest.json';
+const distPwaManifestPath = path.resolve(buildPath, pwaManifestName);
 const fs = require('fs');
 const myPlugin = {
     apply: (compiler) => {
@@ -87,23 +88,7 @@ const myPlugin = {
         //     }, ...
         // ]
         compiler.hooks.done.tap('AfterEmitPlugin', (stats) => {
-            // 1. insert webpackGeneratedAssets into sw.js for 1st option for service worker
-            let oldString = fs.readFileSync(distSwPath); //read existing contents into data
-            let fd = fs.openSync(distSwPath, 'w+');
-            let newString = new Buffer(
-                'webpackGeneratedAssets = ' +
-                JSON.stringify(stats.toJson().assets
-                    .map(i => i.name)
-                    .filter(i => i !== 'sw.js') // remove sw.js
-                    .filter(i => !/.*\.gz$/.test(i)) // remove gzip files
-                ) + ';\n'
-            );
-            // write new string
-            fs.writeSync(fd, newString, 0, newString.length, 0);
-            // append old string or fs.appendFile(fd, oldString);
-            fs.writeSync(fd, oldString, 0, oldString.length, newString.length);
-            fs.close(fd);
-            // 2. generate pwa manifest
+            // 1. generate pwa manifest
             require('fs').writeFileSync(
                 distPwaManifestPath,
                 JSON.stringify({
@@ -121,7 +106,24 @@ const myPlugin = {
                     "background_color": "#ffffff",
                     "display": "standalone"
                 })
-            )
+            );
+            // 2. insert webpackGeneratedAssets into sw.js for 1st option for service worker
+            let oldString = fs.readFileSync(distSwPath); //read existing contents into data
+            let fd = fs.openSync(distSwPath, 'w+');
+            let newString = new Buffer(
+                'webpackGeneratedAssets = ' +
+                JSON.stringify(stats.toJson().assets
+                    .map(i => i.name)
+                    .filter(i => i !== 'sw.js') // remove sw.js
+                    .filter(i => !/.*\.gz$/.test(i)) // remove gzip files
+                    .concat(pwaManifestName) // add manifest, it is not in the stats object
+                ) + ';\n'
+            );
+            // write new string
+            fs.writeSync(fd, newString, 0, newString.length, 0);
+            // append old string or fs.appendFile(fd, oldString);
+            fs.writeSync(fd, oldString, 0, oldString.length, newString.length);
+            fs.close(fd);
         });
     }
 };
