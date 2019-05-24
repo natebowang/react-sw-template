@@ -2,5 +2,7 @@
 
 ## Example: 
 ```bash
-sh react-sw-template/startup.sh yourTitle
+sh react-sw-template/startup.sh <yourTitle>
 ```
+
+![](.gif)
