@@ -5,4 +5,4 @@
 sh react-sw-template/startup.sh <yourTitle>
 ```
 
-![](.gif)
+![useage example](useageExample.gif)
