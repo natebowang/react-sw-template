@@ -1,7 +1,7 @@
 // cacheVersion will be defined during webpack process
 // if this version changed, all previous cache in user's computer will be deleted
 // equivalent to reinstall the whole website, html, js, api data ...
-// const cacheVersion = '20190427101228';
+// const cacheVersion = '20190427-101228';
 
 // webpackGeneratedAssets will be defined during webpack process
 // webpackGeneratedAssets = [
@@ -11,6 +11,15 @@
 //     "static/icon/16x16.c92b85a5b907c70211f4.ico",
 //     "pwa-manifest.json"
 // ];
+
+// Support import your own module
+// import util from './util';
+
+// *DO NOT* support import module from node, may be because
+// the generation of webpackGeneratedAssets and cacheVersion.
+// If you accidentally import module from node, this sw.js will
+// not run, means all listeners will not be attached.
+// import * as R from 'ramda';
 
 // Callback after sw installed
 self.addEventListener('install', (event) => {

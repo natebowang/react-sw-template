@@ -97,7 +97,7 @@ const myPlugin = {
             let nowYYYYMMDDhhmmss =
                 now.getFullYear().toString() +
                 forceTwoDigit((now.getMonth() + 1).toString()) +
-                forceTwoDigit(now.getDate().toString()) +
+                forceTwoDigit(now.getDate().toString()) + '-' +
                 forceTwoDigit(now.getHours().toString()) +
                 forceTwoDigit(now.getMinutes().toString()) +
                 forceTwoDigit(now.getSeconds().toString());
@@ -117,7 +117,7 @@ const myPlugin = {
             fs.writeSync(fd, oldString, 0, oldString.length, newString.length);
             fs.close(fd);
             // 2. generate pwa manifest
-            // todo: update file name
+            // todo: update file name, or inline it into index.html
             require('fs').writeFileSync(
                 distPwaManifestPath,
                 JSON.stringify({
@@ -143,9 +143,9 @@ const myPlugin = {
 const config = {};
 config.common = {
     entry: {
-        main: './srcApp/main.js',
+        'immutable/js/main': './srcApp/main.js',
         // 1st option for service worker
-        sw: './srcSw/sw.js',
+        'sw': './srcSw/sw.js',
     },
     module: {
         rules: [
@@ -181,7 +181,7 @@ config.common = {
                         options: {
                             // outputPath have to be relative path,
                             // absolute path won't work in dev server.
-                            outputPath: './static',
+                            outputPath: './immutable',
                             name() {
                                 // if under dev environment, no hash.
                                 return process.argv.some(i => i === 'dev') ?
@@ -214,7 +214,7 @@ config.common = {
                     chunks: 'all',
                     // node_modules path
                     test: /node_modules/,
-                    name: 'node_modules',
+                    name: 'immutable/js/node_modules',
                 },
             }
 
