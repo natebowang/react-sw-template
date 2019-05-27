@@ -1,7 +1,7 @@
 const path = require('path');
 const buildPath = path.resolve(__dirname, 'dist');
 const srcAppPath = path.resolve(__dirname, 'srcApp');
-const srcImagePath = path.resolve(__dirname, 'srcImage');
+const srcStaticPath = path.resolve(__dirname, 'srcStatic');
 
 const merge = require('webpack-merge');
 
@@ -80,7 +80,7 @@ const myPlugin = {
         // https://github.com/webpack/webpack/blob/3b344f24741bf7e55277d7e62134ad4bb64ac945/lib/Stats.js
         // assets: [
         //     {
-        //         "name": "image/icon/16x16.c92b85a5b907c70211f4.ico",
+        //         "name": "static/icon/16x16.c92b85a5b907c70211f4.ico",
         //         "size": 3870,
         //         "chunks": [],
         //         "chunkNames": [],
@@ -88,7 +88,25 @@ const myPlugin = {
         //     }, ...
         // ]
         compiler.hooks.done.tap('AfterEmitPlugin', (stats) => {
-            // 1. generate pwa manifest
+            // 1. insert webpackGeneratedAssets into sw.js for 1st option for service worker
+            let oldString = fs.readFileSync(distSwPath); //read existing contents into data
+            let fd = fs.openSync(distSwPath, 'w+');
+            let newString = new Buffer(
+                'webpackGeneratedAssets = ' +
+                JSON.stringify(stats.toJson().assets
+                    .map(i => i.name)
+                    .filter(i => i !== 'sw.js') // remove sw.js
+                    .filter(i => !/.*\.gz$/.test(i)) // remove gzip files
+                    .concat(pwaManifestName) // add manifest, it is not in the stats object
+                ) + ';\n'
+            );
+            // write new string
+            fs.writeSync(fd, newString, 0, newString.length, 0);
+            // append old string or fs.appendFile(fd, oldString);
+            fs.writeSync(fd, oldString, 0, oldString.length, newString.length);
+            fs.close(fd);
+            // 2. generate pwa manifest
+            // todo: update file name
             require('fs').writeFileSync(
                 distPwaManifestPath,
                 JSON.stringify({
@@ -107,23 +125,6 @@ const myPlugin = {
                     "display": "standalone"
                 })
             );
-            // 2. insert webpackGeneratedAssets into sw.js for 1st option for service worker
-            let oldString = fs.readFileSync(distSwPath); //read existing contents into data
-            let fd = fs.openSync(distSwPath, 'w+');
-            let newString = new Buffer(
-                'webpackGeneratedAssets = ' +
-                JSON.stringify(stats.toJson().assets
-                    .map(i => i.name)
-                    .filter(i => i !== 'sw.js') // remove sw.js
-                    .filter(i => !/.*\.gz$/.test(i)) // remove gzip files
-                    .concat(pwaManifestName) // add manifest, it is not in the stats object
-                ) + ';\n'
-            );
-            // write new string
-            fs.writeSync(fd, newString, 0, newString.length, 0);
-            // append old string or fs.appendFile(fd, oldString);
-            fs.writeSync(fd, oldString, 0, oldString.length, newString.length);
-            fs.close(fd);
         });
     }
 };
@@ -161,7 +162,7 @@ config.common = {
             },
             {
                 include: [
-                    srcImagePath,
+                    srcStaticPath,
                 ],
                 use: [
                     {
@@ -169,7 +170,7 @@ config.common = {
                         options: {
                             // outputPath have to be relative path,
                             // absolute path won't work in dev server.
-                            outputPath: './image',
+                            outputPath: './static',
                             name() {
                                 // if under dev environment, no hash.
                                 return process.argv.some(i => i === 'dev') ?
