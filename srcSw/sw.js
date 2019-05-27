@@ -1,13 +1,22 @@
+// cacheVersion will be defined during webpack process
 // if this version changed, all previous cache in user's computer will be deleted
 // equivalent to reinstall the whole website, html, js, api data ...
-const cacheVersion = 'v1';
+// const cacheVersion = '20190427101228';
+
+// webpackGeneratedAssets will be defined during webpack process
+// webpackGeneratedAssets = [
+//     "index.html",
+//     "main.42699f25ca777acba31c.js",
+//     "node_modules.96d8210722c3f2675ea9.js",
+//     "static/icon/16x16.c92b85a5b907c70211f4.ico",
+//     "pwa-manifest.json"
+// ];
 
 // Callback after sw installed
 self.addEventListener('install', (event) => {
     console.debug('SW installed');
 
     // 1st option for service worker,
-    // webpackGeneratedAssets will be defined during webpack process
     console.debug('Generated Assets: ' + webpackGeneratedAssets);
     // 2nd option for service worker
     // console.debug(serviceWorkerOption);

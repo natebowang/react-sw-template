@@ -88,17 +88,28 @@ const myPlugin = {
         //     }, ...
         // ]
         compiler.hooks.done.tap('AfterEmitPlugin', (stats) => {
-            // 1. insert webpackGeneratedAssets into sw.js for 1st option for service worker
+            // 1. insert webpackGeneratedAssets and cacheVersion
+            // into sw.js for 1st option for service worker
             let oldString = fs.readFileSync(distSwPath); //read existing contents into data
             let fd = fs.openSync(distSwPath, 'w+');
+            let now = new Date();
+            let forceTwoDigit = (s) => s.length === 1 ? '0' + s : s;
+            let nowYYYYMMDDhhmmss =
+                now.getFullYear().toString() +
+                forceTwoDigit((now.getMonth() + 1).toString()) +
+                forceTwoDigit(now.getDate().toString()) +
+                forceTwoDigit(now.getHours().toString()) +
+                forceTwoDigit(now.getMinutes().toString()) +
+                forceTwoDigit(now.getSeconds().toString());
             let newString = new Buffer(
-                'webpackGeneratedAssets = ' +
+                'const cacheVersion="' + nowYYYYMMDDhhmmss + '";' +
+                'const webpackGeneratedAssets=' +
                 JSON.stringify(stats.toJson().assets
                     .map(i => i.name)
                     .filter(i => i !== 'sw.js') // remove sw.js
                     .filter(i => !/.*\.gz$/.test(i)) // remove gzip files
                     .concat(pwaManifestName) // add manifest, it is not in the stats object
-                ) + ';\n'
+                ) + ';'
             );
             // write new string
             fs.writeSync(fd, newString, 0, newString.length, 0);
