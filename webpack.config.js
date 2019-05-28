@@ -19,8 +19,10 @@ const htmlPlugin = new HtmlPlugin({
         removeRedundantAttributes: true,
         removeScriptTypeAttributes: true,
         removeStyleLinkTypeAttributes: true,
-        useShortDoctype: true
+        useShortDoctype: true,
     },
+    excludeChunks: ['sw'], // is entry property name
+    cache: true,
 });
 
 // Use name instead of chunk id. Benefit both development and production.
@@ -73,7 +75,9 @@ const hmrPlugin = new webpack.HotModuleReplacementPlugin()
 // into sw.js for 1st option for service worker
 // https://github.com/kossnocorp/on-build-webpack/issues/5#issuecomment-432192978
 // todo: fs operation can not be used in webpack-dev-server, since no file created. 
-//		 use fs operation will cause bundle process fail. Should use webpack api instead.
+//       use fs operation will cause bundle process fail.
+//       Should use webpack api instead or read assets from
+//       http://localhost:3000/webpack-dev-server.
 const distSwPath = path.resolve(buildPath, 'sw.js');
 const fs = require('fs');
 const mySwPlugin = {
@@ -107,6 +111,7 @@ const mySwPlugin = {
                     .map(i => i.name)
                     .filter(i => i !== 'sw.js') // remove sw.js
                     .filter(i => !/.*\.gz$/.test(i)) // remove gzip files
+                    .concat('/') // add redirection page
                     .concat(pwaManifestName) // add manifest, it is not in the stats object
                 ) + ';'
             );

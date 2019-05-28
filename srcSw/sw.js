@@ -14,6 +14,7 @@
 
 // Support import your own module
 // import util from './util';
+import {networkFirst} from "./swPolicy";
 
 // *DO NOT* support import module from node, may be because
 // the generation of webpackGeneratedAssets and cacheVersion.
@@ -53,7 +54,7 @@ self.addEventListener('activate', (event) => {
                     (key) => {
                         // only keep cacheVersion, delete all other caches
                         if (key !== cacheVersion) {
-                            return caches.delete(key);
+                            // return caches.delete(key);
                         }
                     }
                 ));
@@ -64,14 +65,31 @@ self.addEventListener('activate', (event) => {
 
 // Callback on each fetch Event
 self.addEventListener('fetch', (event) => {
-    // todo: filter sw.js
+    const request = event.request;
+    if (request.method !== 'GET') return;
     event.respondWith(
-        caches.match(event.request)
-            .then(resp => resp || fetch(event.request)
-                .then(response => caches.open(cacheVersion)
-                    .then((cache) => {
-                        cache.put(event.request, response.clone());
-                        return response;
-                    }))),
+        networkFirst(request, cacheVersion)
     );
+
+    // event.respondWith(
+    //     caches.match(event.request)
+    //         .then(resp => resp || fetch(event.request))
+    // );
+    // event.respondWith(
+    //     fetch(request)
+    //         .catch(function () {
+    //             return caches.match(request);
+    //         })
+    // );
+    // return;
+
+    // event.respondWith(
+    //     caches.match(event.request)
+    //         .then(resp => resp || fetch(event.request)
+    //             .then(response => caches.open(cacheVersion)
+    //                 .then((cache) => {
+    //                     cache.put(event.request, response.clone());
+    //                     return response;
+    //                 }))),
+    // );
 });
