@@ -69,13 +69,14 @@ const srcSwPath = path.resolve(__dirname, 'srcSw');
 // enable HMR
 const hmrPlugin = new webpack.HotModuleReplacementPlugin()
 
-// my plugin
+// My plugin 1: insert webpackGeneratedAssets and cacheVersion
+// into sw.js for 1st option for service worker
 // https://github.com/kossnocorp/on-build-webpack/issues/5#issuecomment-432192978
+// todo: fs operation can not be used in webpack-dev-server, since no file created. 
+//		 use fs operation will cause bundle process fail. Should use webpack api instead.
 const distSwPath = path.resolve(buildPath, 'sw.js');
-const pwaManifestName = 'pwa-manifest.json';
-const distPwaManifestPath = path.resolve(buildPath, pwaManifestName);
 const fs = require('fs');
-const myPlugin = {
+const mySwPlugin = {
     apply: (compiler) => {
         // https://github.com/webpack/webpack/blob/3b344f24741bf7e55277d7e62134ad4bb64ac945/lib/Stats.js
         // assets: [
@@ -87,9 +88,7 @@ const myPlugin = {
         //         "emitted": true
         //     }, ...
         // ]
-        compiler.hooks.done.tap('AfterEmitPlugin', (stats) => {
-            // 1. insert webpackGeneratedAssets and cacheVersion
-            // into sw.js for 1st option for service worker
+        compiler.hooks.done.tap('mySwPlugin', (stats) => {
             let oldString = fs.readFileSync(distSwPath); //read existing contents into data
             let fd = fs.openSync(distSwPath, 'w+');
             let now = new Date();
@@ -116,8 +115,17 @@ const myPlugin = {
             // append old string or fs.appendFile(fd, oldString);
             fs.writeSync(fd, oldString, 0, oldString.length, newString.length);
             fs.close(fd);
-            // 2. generate pwa manifest
-            // todo: update file name, or inline it into index.html
+        });
+    }
+};
+
+// My plugin 2: generate pwa manifest
+// todo: update file name, or inline it into index.html
+const pwaManifestName = 'pwa-manifest.json';
+const distPwaManifestPath = path.resolve(buildPath, pwaManifestName);
+const myPwaManifestPlugin = {
+    apply: (compiler) => {
+        compiler.hooks.done.tap('myPwaManifestPlugin', (stats) => {
             require('fs').writeFileSync(
                 distPwaManifestPath,
                 JSON.stringify({
@@ -199,8 +207,6 @@ config.common = {
         namedModulesPlugin,
         // 2nd option for service worker
         // serviceWorkerPlugin,
-        compressionPlugin,
-        myPlugin,
     ],
     optimization: {
         // SplitChunksPlugin, separate vendor chunks
@@ -263,6 +269,11 @@ config.prod = {
         // default globalObject is window, which is wrong for sw
         globalObject: 'this',
     },
+    plugins: [
+        compressionPlugin,
+        mySwPlugin,
+        myPwaManifestPlugin,
+    ],
 };
 
 module.exports = (env) => {

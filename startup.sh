@@ -10,10 +10,12 @@ fi
 
 # Copy files to title dir
 rsync -aPi \
-      --exclude 'startup.sh' \
-      --exclude '.git' \
-      --exclude '.idea' \
-      --exclude '*.iml' \
+      --include 'src*/***' \
+      --include 'webpack.config.js' \
+      --include 'package.json' \
+      --include 'LICENSE' \
+      --include '.gitignore' \
+      --exclude '*' \
       $SCRIPTPATH/ $TITLE/
 
 # Update Project name
