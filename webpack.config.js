@@ -110,6 +110,7 @@ const mySwPlugin = {
                 JSON.stringify(stats.toJson().assets
                     .map(i => i.name)
                     .filter(i => i !== 'sw.js') // remove sw.js
+                    .filter(i => i !== 'index.html') // replace index.html with /
                     .filter(i => !/.*\.gz$/.test(i)) // remove gzip files
                     .concat('/') // add redirection page
                     .concat(pwaManifestName) // add manifest, it is not in the stats object

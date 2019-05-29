@@ -1,4 +1,3 @@
-import {not200} from "../srcUtil/not200";
 
 // 1. search cache first
 // 2. if found, return response.
@@ -9,26 +8,46 @@ import {not200} from "../srcUtil/not200";
 export const cacheFirst = () => {
 };
 
-// 1. fetch request first
-// 2. todo: if 200, put to cache. if not 200, throw error. try to delete cache.
-// 3. if failed to fetch, use cached assets
-// 4. if no cache(undefined), throw error.
 // example: / /index.html /sw.js /pwa-manifest.json
 export const networkFirst = (request, cacheVersion) => {
+    const putIf200ThrowAndDeleteIfNot200 = cacheVersion => request => response => {
+        if (response.status === 200) {
+            console.debug(`Put 200 resp: ${request.url}`);
+            return caches.open(cacheVersion)
+                .then(cache => {
+                    cache.put(request, response.clone());
+                    return response;
+                });
+        } else {
+            console.debug(`Delete non 200 resp: ${response.status} for ${request.url}`);
+            caches.open(cacheVersion)
+                .then(cache => {
+                    cache.delete(request);
+                });
+            throw new Error(response.status + response.statusText);
+        }
+    };
+
+    // 1. fetch request first
     return fetch(request)
+    // 2. if 200, put to cache. if not 200, throw error. try to delete cache.
+        .then(putIf200ThrowAndDeleteIfNot200(cacheVersion)(request))
         .catch(error => {
-            console.warn(error + '. returning offline page ' + request.url + ' instead.');
+            console.warn(`${error} for ${request.url}. Try offline page instead.`);
             return caches
                 .open(cacheVersion)
+                // 3. if failed to fetch, use cached assets
                 .then(cache => cache.match(request))
                 .then(resp => {
+                    // 4. if no cache(undefined), throw error.
                     if (resp === undefined) {
-                        throw new Error('Failed to fetch, and no cache');
+                        // todo: return a rejected promise
+                        throw new Error(`${error} for ${request.url}. And not cached.`);
                     } else {
                         return resp;
                     }
                 })
-        })
+        });
 };
 
 // 1. search cache and fetch simultaneously

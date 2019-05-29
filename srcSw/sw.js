@@ -14,7 +14,7 @@
 
 // Support import your own module
 // import util from './util';
-import {networkFirst} from "./swPolicy";
+import {networkFirst, cacheFirst, cacheFirstAndRevalidate} from "./swPolicy";
 
 // *DO NOT* support import module from node, may be because
 // the generation of webpackGeneratedAssets and cacheVersion.
@@ -54,7 +54,7 @@ self.addEventListener('activate', (event) => {
                     (key) => {
                         // only keep cacheVersion, delete all other caches
                         if (key !== cacheVersion) {
-                            // return caches.delete(key);
+                            return caches.delete(key);
                         }
                     }
                 ));
