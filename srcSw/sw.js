@@ -14,7 +14,7 @@
 
 // Support import your own module
 // import util from './util';
-import {networkOnly, networkFirst, cacheFirst, cacheFetchRaceFinallyRenew} from "./swPolicy";
+import choosePolicy from "./swPolicy";
 
 // *DO NOT* support import module from node, may be because
 // the generation of webpackGeneratedAssets and cacheVersion.
@@ -65,42 +65,8 @@ self.addEventListener('activate', (event) => {
 
 // Callback on each fetch Event
 self.addEventListener('fetch', (event) => {
-    const request = event.request;
-    if (request.method !== 'GET') return;
+    if (event.request.method !== 'GET') return;
     event.respondWith(
-        // networkOnly(request).catch(e => {
-        //     console.log('networkOnly failed.')
-        // })
-        // networkFirst(request, cacheVersion).catch(e=>{
-        //  console.log('networkFirst failed.')
-        // })
-        // cacheFirst(request, cacheVersion).catch(e => {
-        //     console.log('cacheFirst failed.')
-        // })
-        cacheFetchRaceFinallyRenew(request, cacheVersion).catch(e => {
-            console.log('cacheFetchRaceFinallyRenew failed.')
-        })
+        choosePolicy(event.request, cacheVersion)
     );
-
-    // event.respondWith(
-    //     caches.match(event.request)
-    //         .then(resp => resp || fetch(event.request))
-    // );
-    // event.respondWith(
-    //     fetch(request)
-    //         .catch(function () {
-    //             return caches.match(request);
-    //         })
-    // );
-    // return;
-
-    // event.respondWith(
-    //     caches.match(event.request)
-    //         .then(resp => resp || fetch(event.request)
-    //             .then(response => caches.open(cacheVersion)
-    //                 .then((cache) => {
-    //                     cache.put(event.request, response.clone());
-    //                     return response;
-    //                 }))),
-    // );
 });

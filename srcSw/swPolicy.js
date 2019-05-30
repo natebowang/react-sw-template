@@ -1,26 +1,23 @@
-const throwIfNot200 = response => {
-    if (response.status === 200) {
-        return response;
-    } else {
-        throw new Error(response.status + ' ' + response.statusText);
-    }
-};
-
-const putIf200ThrowAndDeleteIfNot200 = cacheVersion => request => response => {
-    if (response.status === 200) {
-        console.debug(`Put 200 resp: ${request.url}`);
-        return caches.open(cacheVersion)
-            .then(cache => {
-                cache.put(request, response.clone());
-                return response;
+// choose policy
+export default (request, cacheVersion) => {
+    let pathname = new URL(request.url).pathname;
+    switch (true) {
+        case ['/sw.js'].includes(pathname):
+            return networkOnly(request).catch(error => {
+                console.error('Policy networkOnly failed. ' + error)
             });
-    } else {
-        console.debug(`Delete non 200 resp: ${response.status} for ${request.url}`);
-        caches.open(cacheVersion)
-            .then(cache => {
-                cache.delete(request);
+        case ['/', '/pwa-manifest.json'].includes(pathname):
+            return networkFirst(request, cacheVersion).catch(error => {
+                console.error('Policy networkFirst failed. ' + error)
             });
-        throw new Error(response.status + ' ' + response.statusText);
+        case /^\/immutable\//.test(pathname):
+            return cacheFirst(request, cacheVersion).catch(error => {
+                console.error('Policy cacheFirst failed. ' + error)
+            });
+        case /^\/api\//.test(pathname):
+            return cacheFetchRaceFinallyRenew(request, cacheVersion).catch(error => {
+                console.error('Policy cacheFetchRaceFinallyRenew failed. ' + error)
+            });
     }
 };
 
@@ -111,4 +108,30 @@ export const cacheFetchRaceFinallyRenew = (request, cacheVersion) => {
                 return fetchedResp;
             }
         });
+};
+
+const throwIfNot200 = response => {
+    if (response.status === 200) {
+        return response;
+    } else {
+        throw new Error(response.status + ' ' + response.statusText);
+    }
+};
+
+const putIf200ThrowAndDeleteIfNot200 = cacheVersion => request => response => {
+    if (response.status === 200) {
+        console.debug(`Put 200 response: ${request.url}`);
+        return caches.open(cacheVersion)
+            .then(cache => {
+                cache.put(request, response.clone());
+                return response;
+            });
+    } else {
+        console.debug(`Delete non 200 response: ${response.status} for ${request.url}`);
+        caches.open(cacheVersion)
+            .then(cache => {
+                cache.delete(request);
+            });
+        throw new Error(response.status + ' ' + response.statusText);
+    }
 };
