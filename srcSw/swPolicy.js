@@ -1,67 +1,114 @@
-
-// 1. search cache first
-// 2. if found, return response.
-// 3. If NOT cached(undefined), fetch request.
-// 4. if 200, return response and put to cache.
-// 5. If not 200 or failed to fetch, throw error.
-// example: /immutable/*
-export const cacheFirst = () => {
+const throwIfNot200 = response => {
+    if (response.status === 200) {
+        return response;
+    } else {
+        throw new Error(response.status + ' ' + response.statusText);
+    }
 };
 
-// example: / /index.html /sw.js /pwa-manifest.json
-export const networkFirst = (request, cacheVersion) => {
-    const putIf200ThrowAndDeleteIfNot200 = cacheVersion => request => response => {
-        if (response.status === 200) {
-            console.debug(`Put 200 resp: ${request.url}`);
-            return caches.open(cacheVersion)
-                .then(cache => {
-                    cache.put(request, response.clone());
-                    return response;
-                });
-        } else {
-            console.debug(`Delete non 200 resp: ${response.status} for ${request.url}`);
-            caches.open(cacheVersion)
-                .then(cache => {
-                    cache.delete(request);
-                });
-            throw new Error(response.status + response.statusText);
-        }
-    };
+const putIf200ThrowAndDeleteIfNot200 = cacheVersion => request => response => {
+    if (response.status === 200) {
+        console.debug(`Put 200 resp: ${request.url}`);
+        return caches.open(cacheVersion)
+            .then(cache => {
+                cache.put(request, response.clone());
+                return response;
+            });
+    } else {
+        console.debug(`Delete non 200 resp: ${response.status} for ${request.url}`);
+        caches.open(cacheVersion)
+            .then(cache => {
+                cache.delete(request);
+            });
+        throw new Error(response.status + ' ' + response.statusText);
+    }
+};
 
+// example: /sw.js
+// cache-control: no-cache, no-store, max-age=0, must-revalidate
+export const networkOnly = (request) => {
+    return fetch(request)
+        .then(throwIfNot200)
+        // If not 200 or failed to fetch, reject promise.
+        .catch(error => {
+            return Promise.reject(
+                new Error(`Fetch failed (${error} for ${request.url}).`)
+            );
+        });
+};
+
+// example: / /pwa-manifest.json
+// cache-control: no-cache, no-store, max-age=0, must-revalidate
+export const networkFirst = (request, cacheVersion) => {
     // 1. fetch request first
     return fetch(request)
     // 2. if 200, put to cache. if not 200, throw error. try to delete cache.
         .then(putIf200ThrowAndDeleteIfNot200(cacheVersion)(request))
         .catch(error => {
             console.warn(`${error} for ${request.url}. Try offline page instead.`);
-            return caches
-                .open(cacheVersion)
-                // 3. if failed to fetch, use cached assets
+            return caches.open(cacheVersion)
+            // 3. if failed to fetch, use cached assets
                 .then(cache => cache.match(request))
-                .then(resp => {
-                    // 4. if no cache(undefined), throw error.
-                    if (resp === undefined) {
-                        // todo: return a rejected promise
-                        throw new Error(`${error} for ${request.url}. And not cached.`);
+                .then(cachedResp => {
+                    // 4. if no cache(undefined), reject promise.
+                    if (cachedResp !== undefined) {
+                        return cachedResp;
                     } else {
-                        return resp;
+                        return Promise.reject(
+                            new Error(`Fetch failed (${error} for ${request.url}). And not cached.`)
+                        );
                     }
                 })
         });
 };
 
-// 1. search cache and fetch simultaneously
-// 2. return cached of fetched response which is faster(probably cached).
-// 3. If cached, and fetched response
-// 3a. is 200, update cache.
-// 3b. is not 200, throw error. try to delete cache.
-// 3c. if failed to fetch, do nothing.
-// 4. If NOT cached, and fetched response
-// 4a. is 200, update cache.
-// 4b. is not 200 or failed to fetch, throw error.
-// example: /api/*
-export const cacheFirstAndRevalidate = () => {
+// example: /immutable/*
+// Cache-Control: public, max-age=31536000, immutable
+export const cacheFirst = (request, cacheVersion) => {
+    // 1. search cache first
+    return caches.open(cacheVersion)
+        .then(cache => cache.match(request))
+        .then(cachedResp => {
+            if (cachedResp !== undefined) {
+                // 2. if found, return response.
+                return cachedResp;
+            } else {
+                // 3. If NOT cached(undefined), fetch request.
+                return fetch(request)
+                // 4. if 200, return response and put to cache.
+                    .then(putIf200ThrowAndDeleteIfNot200(cacheVersion)(request))
+                    // 5. If not 200 or failed to fetch, reject promise.
+                    .catch(error => {
+                        return Promise.reject(
+                            new Error(`Not cached and fetch failed (${error} for ${request.url}).`)
+                        );
+                    })
+            }
+        })
 };
 
+// example: /api/*
+// Cache-Control: public, max-age=3600, must-revalidate
+export const cacheFetchRaceFinallyRenew = (request, cacheVersion) => {
+    let fetchedResp = fetch(request)
+    // 2. If fetched response is 200, update cache.
+        .then(putIf200ThrowAndDeleteIfNot200(cacheVersion)(request))
+        // 3. If fetched response is not 200 or failed to fetch,
+        //    reject promise. try to delete cache.
+        .catch(error => {
+            return Promise.reject(
+                new Error(`Not cached and fetch failed (${error} for ${request.url}).`)
+            );
+        });
 
-
+    // 1. Return cached of fetched response which is faster(probably cached).
+    return caches.open(cacheVersion)
+        .then(cache => cache.match(request))
+        .then(cachedResp => {
+            if (cachedResp !== undefined) {
+                return cachedResp;
+            } else {
+                return fetchedResp;
+            }
+        });
+};

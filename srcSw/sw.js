@@ -14,7 +14,7 @@
 
 // Support import your own module
 // import util from './util';
-import {networkFirst, cacheFirst, cacheFirstAndRevalidate} from "./swPolicy";
+import {networkOnly, networkFirst, cacheFirst, cacheFetchRaceFinallyRenew} from "./swPolicy";
 
 // *DO NOT* support import module from node, may be because
 // the generation of webpackGeneratedAssets and cacheVersion.
@@ -68,7 +68,18 @@ self.addEventListener('fetch', (event) => {
     const request = event.request;
     if (request.method !== 'GET') return;
     event.respondWith(
-        networkFirst(request, cacheVersion)
+        // networkOnly(request).catch(e => {
+        //     console.log('networkOnly failed.')
+        // })
+        // networkFirst(request, cacheVersion).catch(e=>{
+        //  console.log('networkFirst failed.')
+        // })
+        // cacheFirst(request, cacheVersion).catch(e => {
+        //     console.log('cacheFirst failed.')
+        // })
+        cacheFetchRaceFinallyRenew(request, cacheVersion).catch(e => {
+            console.log('cacheFetchRaceFinallyRenew failed.')
+        })
     );
 
     // event.respondWith(
