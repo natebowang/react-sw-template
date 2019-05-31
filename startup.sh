@@ -15,6 +15,7 @@ rsync -aPi \
       --include 'package.json' \
       --include 'LICENSE' \
       --include '.gitignore' \
+      --include '.babelrc' \
       --exclude '*' \
       $SCRIPTPATH/ $TITLE/
 
