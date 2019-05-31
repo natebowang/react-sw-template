@@ -170,20 +170,9 @@ config.common = {
                     srcSwPath
                 ],
                 test: /\.js$/,
-                use: {
-                    loader: 'babel-loader',
-                    options: {
-                        // https://babeljs.io/docs/en/presets
-                        presets: ['@babel/preset-env', '@babel/react',],
-                        plugins: [
-                            // https://babeljs.io/docs/en/plugins
-                            ['@babel/plugin-proposal-class-properties', {loose: true},],
-                            '@babel/plugin-proposal-object-rest-spread',
-                        ],
-                        // cache in node_modules/.cache/
-                        cacheDirectory: true,
-                    },
-                },
+                // Can not put babel options here, jest can not find this place
+                // because I use webpack-merged to generate webpack configuration.
+                use: {loader: 'babel-loader'},
             },
             // for normalize.css, it will be packaged in node_modules chunk
             {
