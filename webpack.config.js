@@ -185,6 +185,11 @@ config.common = {
                     },
                 },
             },
+            // for normalize.css, it will be packaged in node_modules chunk
+            {
+                test: /\.css$/,
+                use: [{loader: 'style-loader'}, {loader: 'css-loader'}],
+            },
             {
                 include: [
                     srcStaticPath,

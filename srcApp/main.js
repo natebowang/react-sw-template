@@ -1,3 +1,4 @@
+import 'normalize.css';
 import React from 'react';
 import ReactDOM from 'react-dom';
 // 2st option for service worker
@@ -26,7 +27,7 @@ if ('serviceWorker' in navigator) {
 //     const registration = runtime.register();
 // }
 
-// Hot module Replacement
+// Hot Module Replacement
 // [Problems with event listener](https://webpack.js.org/guides/hot-module-replacement#gotchas)
 if (module.hot) {
     module.hot.accept();
